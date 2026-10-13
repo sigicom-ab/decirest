@@ -66,7 +66,7 @@ to_html(Req, State) ->
           Css/binary,
           "</style> </head>  <body>  <div id='content'></div>  <pre id='raw' hidden>">>,
     Script =
-        <<"<script src='https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js'></script> <script>  document.getElementById('content').innerHTML =marked.parse(document.getElementById('raw').innerHTML);</script>">>,
+        <<"<script src='https://cdn.jsdelivr.net/npm/marked@14.1.3/marked.min.js'></script> <script>  document.getElementById('content').innerHTML =marked.parse(document.getElementById('raw').innerHTML);</script>">>,
     PostMd = <<"</pre>", Script/binary, "</body></html>">>,
     {<<PreMd/binary, Body/binary, PostMd/binary>>, Req, State}.
 
@@ -124,7 +124,9 @@ doc_map_to_md(Map = #{name := Name}) ->
          {paths, fun paths_md/1},
          {content_types_provided, fun ctp_md/1},
          {content_types_accepted, fun cta_md/1},
+         {action_schema, fun decirest_schema:schema_to_md/1},
          {schema, fun decirest_schema:schema_to_md/1},
+         {output_schema, fun decirest_schema:schema_to_md/1},
          {children, children_md(Name)},
          {markdown_extra, fun extra_md/1}],
     doc_map_to_md(Sections, Map, [<<"Resource documentation: ", Name/binary, "\n===\n\n">>]).

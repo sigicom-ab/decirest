@@ -26,6 +26,7 @@ pretty_prop({Property, Json},
     Default = maps:get(<<"default">>, Json, undefined),
     Type = get_type_md(Json),
     RequiredProps = get_required_properties(Type, Json),
+    OneOf = get_oneOf(Json),
     Properties = get_properties(Type, Json),
     List = maps:get(<<"enum">>, Json, []),
 
@@ -34,6 +35,13 @@ pretty_prop({Property, Json},
     TitleMd = get_title_md(Property, Json, Required),
     TypeMd = [<<"\n">>, Indentation, <<"*type*: ">>, Type, <<"\n">>],
     DefaultMd = get_default_md(Default, Indentation),
+
+    OneOfMd = [[Indentation,
+                ListSymbol,
+                pretty_prop({<<"oneOf">>, P},
+                            #{level => Level + 1,
+                              required => []})]
+               || P <- OneOf],
 
     PropertiesMd =
         [[Indentation,
@@ -51,13 +59,16 @@ pretty_prop({Property, Json},
      DefaultMd,
      ListMd,
      PropertiesMd,
+     OneOfMd,
      <<"</box>">>,
      <<"\n">>].
 
-style_level(0) -> {<<"">>, <<"+ ">>};
+style_level(0) -> {<<"">>, <<"* ">>};
 style_level(1) -> {<<"    ">>, <<"* ">>};
-style_level(2) -> {<<"        ">>, <<"- ">>};
-style_level(3) -> {<<"            ">>, <<"+ ">>}.
+style_level(2) -> {<<"        ">>, <<"* ">>};
+style_level(3) -> {<<"            ">>, <<"* ">>};
+style_level(N) -> {list_to_binary(string:pad("", N * 4)), <<"* ">>}.
+
 
 get_required_properties(<<"array">>, Json) ->
     maps:get(<<"required">>, maps:get(<<"items">>, Json, #{}), []);
@@ -66,6 +77,10 @@ get_required_properties(_, Json) -> maps:get(<<"required">>, Json, []).
 get_properties(<<"array">>, Json) ->
     maps:get(<<"properties">>, maps:get(<<"items">>, Json, #{}), #{});
 get_properties(_, Json) -> maps:get(<<"properties">>, Json, #{}).
+
+
+get_oneOf(#{<<"oneOf">> := Options}) -> Options;
+get_oneOf(_) -> [].
 
 get_type_md(Json) ->
     % type is either a single type (string) or a list of types ([string])
