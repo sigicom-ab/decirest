@@ -79,16 +79,72 @@ body {
   line-height: 1.35;
 }
 
-required {
-  color: #DC143C;
+/* JSON schema rendering, see decirest_schema.erl */
+.schema-node {
+  background: #F7FAFD;
+  border: 1px solid #DBE7F3;
+  border-radius: 6px;
+  padding: .5rem .75rem;
+  margin: .5rem 0;
 }
 
-box {
-  border-radius: 15px;
-  background: #F0F8FF;
-  padding: 6px;
-  box-shadow: 0 0 5px;
-  height: 100px;
+.schema-node p {
+  margin: .25rem 0;
+}
+
+.schema-node code,
+.schema-option summary code {
+  font-family: Menlo, Consolas, monospace;
+  font-size: .85em;
+  background: #E8F0F8;
+  border-radius: 4px;
+  padding: 0 .3em;
+}
+
+.schema-children {
+  margin-left: 1rem;
+  border-left: 2px solid #DBE7F3;
+  padding-left: .75rem;
+}
+
+.req {
+  color: #DC143C;
+  font-variant: small-caps;
+  font-size: .9em;
+}
+
+.schema-combinator {
+  border-left: 3px solid #7E57C2;
+  padding-left: .75rem;
+  margin: .75rem 0;
+}
+
+.schema-combinator > p:first-child strong {
+  color: #7E57C2;
+}
+
+details.schema-option {
+  border: 1px solid #D9CCF0;
+  border-radius: 6px;
+  margin: .4rem 0;
+  background: #FFF;
+}
+
+details.schema-option > summary {
+  cursor: pointer;
+  font-weight: 400;
+  padding: .35rem .75rem;
+}
+
+details.schema-option[open] > summary {
+  border-bottom: 1px solid #D9CCF0;
+}
+
+/* the option already has a border, avoid a card inside a card */
+.schema-option-body {
+  background: transparent;
+  border: none;
+  margin: 0;
 }
 p,
 .air-p {

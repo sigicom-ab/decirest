@@ -56,6 +56,18 @@ prettify_errors([{data_invalid,
                  | Errors],
                 ErrorMap) ->
     prettify_errors(Errors, add_required_errors(Required, Value, Path, ErrorMap));
+prettify_errors([{data_invalid,
+                  Schema,
+                  {not_one_schema_valid, InnerErrors} = _Reason,
+                  _Value,
+                  Path}
+                 | Errors],
+                ErrorMap) ->
+    InvalidSchemaErrors = prettify_errors(InnerErrors, #{}),
+    P = get_path(Path),
+    prettify_errors(Errors,
+                    ErrorMap#{<<P/binary, "__no_schema_valid">> => InvalidSchemaErrors,
+                              <<P/binary, "__schema">> => Schema});
 prettify_errors([{data_invalid, _Schema, ErrorType, Value, Path} | Errors], ErrorMap) ->
     P = get_path(Path),
     prettify_errors(Errors, ErrorMap#{P => [[ErrorType, Value] | maps:get(P, ErrorMap, [])]});

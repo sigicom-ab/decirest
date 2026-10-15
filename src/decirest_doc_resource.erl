@@ -64,11 +64,19 @@ to_html(Req, State) ->
         <<"<!doctype html>  <html>  <head>",
           "<meta charset='utf-8'/>  <title>API DOC</title> <style>",
           Css/binary,
-          "</style> </head>  <body>  <div id='content'></div>  <pre id='raw' hidden>">>,
+          "</style> </head>  <body>  <div id='content'></div>  <script type='text/markdown' id='raw'>">>,
+    %% the markdown is kept in a non-executed script tag so the browser
+    %% hands it to marked untouched, only "</script" has to be escaped
     Script =
-        <<"<script src='https://cdn.jsdelivr.net/npm/marked@4.0.0/marked.min.js'></script> <script>  document.getElementById('content').innerHTML =marked.parse(document.getElementById('raw').innerHTML);</script>">>,
-    PostMd = <<"</pre>", Script/binary, "</body></html>">>,
-    {<<PreMd/binary, Body/binary, PostMd/binary>>, Req, State}.
+        <<"<script src='https://cdn.jsdelivr.net/npm/marked@18.1.1/lib/marked.umd.js'></script>",
+          "<script>document.getElementById('content').innerHTML=marked.parse(",
+          "document.getElementById('raw').textContent.split('<\\\\/script').join('<' + '/script'));",
+          "</script>">>,
+    PostMd = <<"</script>", Script/binary, "</body></html>">>,
+    {<<PreMd/binary, (escape_script_end(Body))/binary, PostMd/binary>>, Req, State}.
+
+escape_script_end(Body) ->
+    re:replace(Body, "</script", "<\\\\/script", [global, caseless, {return, binary}]).
 
 parse_doc_output(Docs = #{module := Module}, Req, #{ref := Ref} = State) ->
     D = maps:merge(Docs, get_extra_docs(Ref, Module)),
@@ -124,7 +132,9 @@ doc_map_to_md(Map = #{name := Name}) ->
          {paths, fun paths_md/1},
          {content_types_provided, fun ctp_md/1},
          {content_types_accepted, fun cta_md/1},
-         {schema, fun decirest_schema:schema_to_md/1},
+         {action_schema, schema_md(<<"Action schema (POST)">>)},
+         {schema, schema_md(<<"Schema">>)},
+         {output_schema, schema_md(<<"Output schema">>)},
          {children, children_md(Name)},
          {markdown_extra, fun extra_md/1}],
     doc_map_to_md(Sections, Map, [<<"Resource documentation: ", Name/binary, "\n===\n\n">>]).
@@ -150,6 +160,8 @@ children_md(_Name) ->
     fun(ChildUrls) -> [<<"Child resources\n---\n">>, md_link_list(ChildUrls)] end.
 
 extra_md(Data) -> Data.
+
+schema_md(Title) -> fun(Schema) -> decirest_schema:schema_to_md(Title, Schema) end.
 
 md_link_list(DataList) ->
     [["* [", Data, "](/apidoc/path", Data, ") \n"] || Data <- DataList].
